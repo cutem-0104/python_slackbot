@@ -4,6 +4,9 @@ from slackbot.bot import respond_to     # @botname: で反応するデコーダ
 from slackbot.bot import listen_to      # チャネル内発言で反応するデコーダ
 from slackbot.bot import default_reply  # 該当する応答がない場合に反応するデコーダ
 
+import urllib.request
+import json
+
 # @respond_to('string')     bot宛のメッセージ
 #                           stringは正規表現が可能 「r'string'」
 # @listen_to('string')      チャンネル内のbot宛以外の投稿
@@ -67,3 +70,31 @@ def set_default_func(message):
 def listen_func(message):
     message.send('リッスンだってさ')
     message.reply('おまえか')
+
+
+@respond_to('天気')
+def get_weather(message):
+    message.send('りょうかい〜')
+    citycode = "130010"
+    url = "http://weather.livedoor.com/forecast/webservice/json/v1?city={}".format(citycode)
+    response = urllib.request.urlopen(url)
+
+    data = response.read()
+    resp = json.loads(data.decode())
+
+    title = resp['title']
+    text = resp['description']['text']
+
+    for f in resp['forecasts']:
+        label = f['dateLabel']
+        telop = f['telop']
+        try:
+            min_temp = f['temperature']['min']['celsius']
+        except TypeError:
+            min_temp = "わからん"
+        try:
+            max_temp = f['temperature']['max']['celsius']
+        except TypeError:
+            max_temp = "わからん"
+
+        message.send("{} の天気は {} 最低気温は {}, 最高気温は {} です。".format(label, telop, min_temp, max_temp))
